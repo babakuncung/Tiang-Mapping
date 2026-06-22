@@ -1,4 +1,4 @@
-buatkan issue.md, berisi planing untuk membuat ini :
+buatkan planning.md, berisi planing untuk membuat ini :
 
 buat project baru di folder ini
 

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="page-title">Tiang Mapper Pro — BITNET</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Google Fonts: Inter + Roboto Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+
+  <!-- ═══ HEADER ════════════════════════════════════════════════ -->
+  <header class="header">
+    <div class="header-brand">
+      <span class="brand-icon">🗼</span>
+      <div>
+        <span class="brand-name">Tiang Mapper Pro</span>
+        <span class="brand-sub">BITNET RT RW NET</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button id="btn-tambah" class="btn btn-primary">
+        ＋ Tambah Tiang
+      </button>
+
+      <div class="dropdown">
+        <button class="btn btn-secondary" id="btn-export">
+          📤 Export ▾
+        </button>
+        <div class="dropdown-menu" id="dropdown-export">
+          <a href="/api/export/kml" class="dropdown-item">🌍 Export KML (Google Earth)</a>
+          <a href="/api/export/csv" class="dropdown-item">📊 Export CSV (Excel)</a>
+          <a href="/api/export/json" class="dropdown-item">💾 Backup JSON</a>
+        </div>
+      </div>
+
+      <a href="/swagger" target="_blank" class="btn btn-ghost" title="API Docs">
+        📖 API
+      </a>
+    </div>
+  </header>
+
+  <!-- ═══ LAYOUT UTAMA ══════════════════════════════════════════ -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span>📋 Data Tiang</span>
+        <button id="btn-collapse" class="btn-icon" title="Collapse">◀</button>
+      </div>
+
+      <!-- STATISTIK -->
+      <div class="stats-grid">
+        <div class="stat-card stat-total">
+          <span class="stat-num" id="stat-total">0</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-card stat-pln">
+          <span class="stat-num" id="stat-pln">0</span>
+          <span class="stat-label">PLN</span>
+        </div>
+        <div class="stat-card stat-telkom">
+          <span class="stat-num" id="stat-telkom">0</span>
+          <span class="stat-label">Telkom</span>
+        </div>
+        <div class="stat-card stat-isp">
+          <span class="stat-num" id="stat-isp">0</span>
+          <span class="stat-label">ISP</span>
+        </div>
+      </div>
+
+      <!-- Kondisi badges -->
+      <div class="kondisi-row">
+        <span class="badge badge-baik" id="badge-baik">✅ Baik: 0</span>
+        <span class="badge badge-perhatian" id="badge-perhatian">⚠️ Perhatian: 0</span>
+        <span class="badge badge-rusak" id="badge-rusak">❌ Rusak: 0</span>
+      </div>
+
+      <!-- Search -->
+      <div class="search-box">
+        <input
+          type="text"
+          id="input-search"
+          placeholder="🔍 Cari ID atau catatan..."
+          class="input-search"
+        />
+      </div>
+
+      <!-- Filter -->
+      <div class="filter-row">
+        <select id="filter-jenis" class="select-filter">
+          <option value="">Semua Jenis</option>
+          <option value="PLN">PLN</option>
+          <option value="Telkom">Telkom</option>
+          <option value="ISP Sendiri">ISP Sendiri</option>
+          <option value="Bambu">Bambu</option>
+          <option value="Besi">Besi</option>
+          <option value="Lainnya">Lainnya</option>
+        </select>
+        <select id="filter-kondisi" class="select-filter">
+          <option value="">Semua Kondisi</option>
+          <option value="Baik">Baik</option>
+          <option value="Perlu Perhatian">Perlu Perhatian</option>
+          <option value="Rusak">Rusak</option>
+        </select>
+      </div>
+
+      <!-- Daftar tiang -->
+      <div class="tiang-list" id="tiang-list">
+        <div class="empty-state">
+          <div class="empty-icon">🗼</div>
+          <p>Belum ada data tiang.</p>
+          <p>Klik <strong>+ Tambah Tiang</strong> untuk memulai.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- PETA -->
+    <main class="map-container">
+      <div id="map"></div>
+
+      <!-- Floating controls -->
+      <div class="map-controls">
+        <button id="btn-lokasi" class="map-btn" title="Lokasi Saya">📍</button>
+        <button id="btn-layer" class="map-btn" title="Toggle Satelit">🛰️</button>
+        <button id="btn-fitall" class="map-btn" title="Tampilkan Semua">🔍</button>
+      </div>
+
+      <!-- Mode indicator -->
+      <div class="mode-indicator" id="mode-indicator" style="display:none">
+        🎯 Klik peta untuk menandai posisi tiang
+        <button id="btn-cancel-mode" class="btn-cancel-mode">Batal</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══ STATUS BAR ════════════════════════════════════════════ -->
+  <footer class="status-bar">
+    <span id="status-msg">Siap</span>
+    <span class="status-sep">|</span>
+    <span id="status-time">—</span>
+    <span class="status-sep">|</span>
+    <span>Tiang Mapper Pro v1.0 — BITNET | tools.ajengmedia.com</span>
+  </footer>
+
+  <!-- ═══ MODAL FORM TIANG ═══════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Tambah Tiang Baru</h2>
+        <button class="btn-icon" id="btn-close-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="form-id" />
+
+        <div class="form-row">
+          <label>Koordinat GPS</label>
+          <div class="coord-row">
+            <input type="number" id="form-lat" placeholder="Latitude" step="any" class="input-coord" />
+            <input type="number" id="form-lng" placeholder="Longitude" step="any" class="input-coord" />
+          </div>
+          <small class="form-hint">📌 Klik peta untuk isi otomatis</small>
+        </div>
+
+        <div class="form-row">
+          <label>Label (opsional)</label>
+          <input type="text" id="form-label" placeholder="cth: Dekat Warung Pak Budi" class="input-text" />
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-row">
+            <label>Jenis Tiang</label>
+            <select id="form-jenis" class="input-select">
+              <option value="ISP Sendiri">ISP Sendiri</option>
+              <option value="PLN">PLN</option>
+              <option value="Telkom">Telkom</option>
+              <option value="Bambu">Bambu</option>
+              <option value="Besi">Besi</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Kondisi</label>
+            <select id="form-kondisi" class="input-select">
+              <option value="Baik">✅ Baik</option>
+              <option value="Perlu Perhatian">⚠️ Perlu Perhatian</option>
+              <option value="Rusak">❌ Rusak</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>Catatan Teknisi</label>
+          <textarea id="form-catatan" placeholder="Kondisi lapangan, keterangan khusus, dll..." class="input-textarea" maxlength="500"></textarea>
+          <small class="form-hint char-counter"><span id="char-count">0</span>/500</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-modal-batal">Batal</button>
+        <button class="btn btn-primary" id="btn-modal-simpan">💾 Simpan Tiang</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL KONFIRMASI HAPUS ═══════════════════════════════ -->
+  <div class="modal-overlay" id="modal-hapus" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2>🗑️ Hapus Tiang?</h2>
+      </div>
+      <div class="modal-body">
+        <p>Tiang <strong id="hapus-kode">BITNET-XXX</strong> akan dihapus permanen dari database.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-hapus-batal">Batal</button>
+        <button class="btn btn-danger" id="btn-hapus-konfirm">Ya, Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TOAST NOTIFICATIONS ════════════════════════════════════ -->
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
