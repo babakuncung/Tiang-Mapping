@@ -1,7 +1,6 @@
 import { Elysia, t } from "elysia";
 import { db } from "../db";
 import { users } from "../db/schema";
-import { eq } from "drizzle-orm";
 
 export const routes = new Elysia()
   .get("/", () => ({ status: "ok" }))
